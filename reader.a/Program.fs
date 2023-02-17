@@ -55,8 +55,28 @@ module B =
         let r = "helloworld"
         Y.Reader (fun c -> c.x r)
 
+module C =
+    let reader = Y.ReaderBuilder()
+
+    let compareTwoStrings (a : string) (b : string) =
+        reader {
+            let! (logger : X.ILogger) = Y.ask
+            logger.Debug "compareTwoStrings: starting"
+
+            let result = compare a b
+
+            logger.Info (sprintf "compareTwoStrings: result=%A" result)
+            logger.Debug "compareTwoStrings: Finished"
+            return result
+        }
+
 
 [<EntryPoint>]
 let main _ =
-    printfn "%A" (id (fun _ -> "helloworld"))
+    let logger =
+        { new X.ILogger with
+          member _.Info(s) = printfn "Info: %s" s
+          member _.Debug(s) = printfn "Debug: %s" s }
+    let program = C.compareTwoStrings "foo" "bar"
+    Y.run logger program |> ignore
     0
